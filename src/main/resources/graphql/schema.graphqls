@@ -1,0 +1,42 @@
+schema {
+  query: Query
+}
+
+type Query {
+  employeeById(employeeId: ID!): Employee
+  recipeByKeyword(keyword: String!): RecipeSearchResult
+  itemById(itemId: ID!): Item
+}
+
+type Employee {
+  employeeId: ID!
+  name: String!
+  department: String!
+}
+
+type RecipeSearchResult {
+  keyword: String!
+  recipe: Recipe
+  nextActionHint: String!
+}
+
+type Recipe {
+  recipeId: ID!
+  recipeName: String!
+  servings: Int!
+  requiredIngredients: [RequiredIngredient!]!
+}
+
+type RequiredIngredient {
+  ingredientName: String!
+  requiredQty: String!
+  itemId: ID!
+}
+
+type Item {
+  itemId: ID!
+  itemName: String!
+  unitPrice: Int!
+  unit: String!
+  stock: Int!
+}

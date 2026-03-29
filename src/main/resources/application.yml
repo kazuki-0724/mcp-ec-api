@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: external-api
+  graphql:
+    graphiql:
+      enabled: true
+    schema:
+      introspection:
+        enabled: ${GRAPHQL_INTROSPECTION_ENABLED:true}
+
+server:
+  port: ${PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%5p traceId=%X{traceId:-} spanId=%X{spanId:-} correlationId=%X{correlationId:-} userId=%X{userId:-} logger=%logger{36} msg=%m%n"
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+  graphql:
+    max-depth: 6
+    max-complexity: 50
+  mock:
+    timeout-employee-id: E999
+    timeout-item-id: G999
+    timeout-keyword: timeout
