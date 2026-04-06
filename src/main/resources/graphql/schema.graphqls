@@ -1,17 +1,60 @@
 schema {
   query: Query
+  mutation: Mutation
 }
+
+scalar DateTime
 
 type Query {
   employeeById(employeeId: ID!): Employee
   recipeByKeyword(keyword: String!): RecipeSearchResult
-  itemById(itemId: ID!): Item
+  itemById(itemId: ID!): ItemBasic
+
+  products(query: String, categoryId: ID, brandId: ID, limit: Int = 8): [Product!]!
+  productById(itemId: ID!): Product
+  categories: [Category!]!
+  categoryProducts(categoryId: ID!, limit: Int = 12): [Product!]!
+  brands: [Brand!]!
+  brandProducts(brandId: ID!, limit: Int = 12): [Product!]!
+  featuredProducts(limit: Int = 6): [Product!]!
+  recommendedProducts(customerId: ID, basedOnItemId: ID, limit: Int = 6): [Product!]!
+
+  coupons: [Coupon!]!
+  availableCoupons(customerTier: String): [Coupon!]!
+
+  inventoryStatus(itemId: ID!): InventoryStatus
+  priceQuote(itemId: ID!, quantity: Int = 1, customerTier: String): PriceLine
+  bulkPriceQuote(items: [QuoteItemInput!]!, customerTier: String, couponCode: String): BulkPriceQuote!
+
+  currentCart: Cart!
+  customerProfile(customerId: ID!): CustomerProfile
+  loyaltySummary(customerId: ID!): LoyaltySummary
+  wishlist(customerId: ID!): Wishlist!
+  orderHistory(customerId: ID!, limit: Int = 5): [OrderSummary!]!
+  orderById(orderId: ID!): Order
+
+  productReviews(itemId: ID!, limit: Int = 5): [ProductReview!]!
+  paymentMethods: [PaymentMethod!]!
+  returnPolicy(categoryId: ID): ReturnPolicy!
+  deliverySlots(postalCode: String!, prefecture: String!): DeliverySlotResult!
+  shippingFeeQuote(postalCode: String!, prefecture: String!, shippingMethod: String = "standard", cartTotal: Int = 0): ShippingFeeQuote!
+  validateShippingAddress(input: ShippingAddressInput!): AddressValidation!
+}
+
+type Mutation {
+  addItemToCart(itemId: ID!, quantity: Int = 1): Cart!
+  updateCartItemQuantity(itemId: ID!, quantity: Int!): Cart!
+  removeItemFromCart(itemId: ID!): Cart!
+  applyCouponToCart(couponCode: String!): Cart!
+  addItemToWishlist(customerId: ID!, itemId: ID!): Wishlist!
 }
 
 type Employee {
   employeeId: ID!
   name: String!
   department: String!
+  role: String
+  email: String
 }
 
 type RecipeSearchResult {
@@ -33,10 +76,216 @@ type RequiredIngredient {
   itemId: ID!
 }
 
-type Item {
+type ItemBasic {
   itemId: ID!
   itemName: String!
+  categoryId: ID
+  brandId: ID
   unitPrice: Int!
   unit: String!
   stock: Int!
+  tags: [String!]!
+}
+
+type Category {
+  categoryId: ID!
+  categoryName: String!
+  description: String
+  productCount: Int!
+}
+
+type Brand {
+  brandId: ID!
+  brandName: String!
+  country: String
+  productCount: Int!
+}
+
+type Product {
+  itemId: ID!
+  itemName: String!
+  categoryId: ID!
+  categoryName: String
+  brandId: ID!
+  brandName: String
+  unitPrice: Int!
+  unit: String!
+  stock: Int!
+  tags: [String!]!
+  description: String
+  featured: Boolean!
+  averageRating: Float
+  reviewCount: Int!
+}
+
+type Coupon {
+  couponCode: String!
+  description: String!
+  discountType: String!
+  discountValue: Int!
+  minTotal: Int!
+  eligibleTiers: [String!]!
+}
+
+type InventoryStatus {
+  itemId: ID!
+  stock: Int!
+  availability: String!
+  estimatedRestockDays: Int!
+}
+
+type PriceLine {
+  itemId: ID!
+  itemName: String!
+  quantity: Int!
+  unitPrice: Int!
+  originalSubtotal: Int!
+  discountAmount: Int!
+  subtotal: Int!
+  appliedDiscountRate: Float!
+  unit: String!
+}
+
+input QuoteItemInput {
+  itemId: ID!
+  quantity: Int!
+}
+
+type BulkPriceQuote {
+  customerTier: String!
+  couponCode: String
+  items: [PriceLine!]!
+  summary: BulkPriceQuoteSummary!
+}
+
+type BulkPriceQuoteSummary {
+  subtotal: Int!
+  couponDiscount: Int!
+  grandTotal: Int!
+}
+
+type Cart {
+  cartId: ID!
+  customerId: ID!
+  couponCode: String
+  items: [PriceLine!]!
+  summary: CartSummary!
+}
+
+type CartSummary {
+  originalSubtotal: Int!
+  lineDiscountTotal: Int!
+  couponDiscount: Int!
+  subtotal: Int!
+  shippingFee: Int!
+  grandTotal: Int!
+}
+
+type Address {
+  postalCode: String!
+  prefecture: String!
+  city: String!
+  line1: String!
+  line2: String!
+}
+
+type CustomerProfile {
+  customerId: ID!
+  fullName: String!
+  email: String!
+  tier: String!
+  defaultAddress: Address!
+  favoriteCategoryIds: [ID!]!
+}
+
+type LoyaltySummary {
+  customerId: ID!
+  tier: String!
+  points: Int!
+  nextTier: String
+  nextTierRequiredPoints: Int
+  perks: [String!]!
+}
+
+type Wishlist {
+  customerId: ID!
+  items: [Product!]!
+}
+
+type OrderSummary {
+  orderId: ID!
+  orderedAt: DateTime!
+  status: String!
+  total: Int!
+  itemCount: Int!
+}
+
+type OrderItem {
+  itemId: ID!
+  quantity: Int!
+  unitPrice: Int!
+  itemName: String
+}
+
+type Order {
+  orderId: ID!
+  customerId: ID!
+  orderedAt: DateTime!
+  status: String!
+  paymentMethod: String!
+  shippingAddress: Address!
+  items: [OrderItem!]!
+  shippingFee: Int!
+  discountTotal: Int!
+  total: Int!
+}
+
+type ProductReview {
+  reviewId: ID!
+  rating: Int!
+  title: String!
+  comment: String!
+  author: String!
+  createdAt: String!
+}
+
+type PaymentMethod {
+  code: String!
+  label: String!
+  fees: Int!
+}
+
+type ReturnPolicy {
+  days: Int!
+  openedPackageAllowed: Boolean!
+  notes: [String!]!
+}
+
+type DeliverySlotResult {
+  postalCode: String!
+  prefecture: String!
+  slots: [String!]!
+}
+
+type ShippingFeeQuote {
+  postalCode: String!
+  prefecture: String!
+  shippingMethod: String!
+  shippingFee: Int!
+  freeShippingThreshold: Int!
+  remoteSurcharge: Int!
+}
+
+input ShippingAddressInput {
+  postalCode: String!
+  prefecture: String!
+  city: String!
+  line1: String!
+  line2: String
+}
+
+type AddressValidation {
+  isValid: Boolean!
+  normalizedAddress: Address!
+  warnings: [String!]!
 }
